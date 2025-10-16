@@ -58,7 +58,7 @@ class Demo:
         # Use gpu or not
         torch.set_default_tensor_type('torch.FloatTensor')
         if torch.cuda.is_available():
-            self.device = torch.device('cuda')
+            self.device = torch.device('cuda:0')
             torch.set_default_tensor_type('torch.cuda.FloatTensor')
         else:
             self.device = torch.device('cpu')

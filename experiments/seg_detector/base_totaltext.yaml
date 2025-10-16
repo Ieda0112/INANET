@@ -1,5 +1,5 @@
 import:
-    - 'D:/zhangyu/DB-master1/experiments/seg_detector/base.yaml'
+    - '/home/shunsuke_ieda@pip.waseda.ac.jp/workspace/2022/shunsuke_ieda/Master/INANET_ieda/experiments/seg_detector/base.yaml
 package:
     - 'decoders.seg_detector_loss'
 define:
