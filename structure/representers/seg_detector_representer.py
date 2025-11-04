@@ -79,28 +79,43 @@ class SegDetectorRepresenter(Configurable):
             (bitmap*255).astype(np.uint8),
             cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
 
-        for contour in contours[:self.max_candidates]:
+        # print(f"DEBUG: image shape={bitmap.shape}, contours found={len(contours)}, box_thresh={self.box_thresh}")
+
+        filtered_by_points = 0
+        filtered_by_score = 0
+        filtered_by_box_len = 0
+        filtered_by_size = 0
+        # for contour in contours[:self.max_candidates]:
+        for contour_idx, contour in enumerate(contours[:self.max_candidates]):
             epsilon = 0.002 * cv2.arcLength(contour, True)
             approx = cv2.approxPolyDP(contour, epsilon, True)
             points = approx.reshape((-1, 2))
             if points.shape[0] < 4:
+                filtered_by_points += 1
                 continue
             # _, sside = self.get_mini_boxes(contour)
             # if sside < self.min_size:
             #     continue
             score = self.box_score_fast(pred, points.reshape(-1, 2))
             if self.box_thresh > score:
+                filtered_by_score += 1
                 continue
             
             if points.shape[0] > 2:
                 box = self.unclip(points, unclip_ratio=2.0)
-                if len(box) > 1:
-                    continue
+                # デバッグ：boxの形状を確認
+                # print(f"DEBUG unclip: box type={type(box)}, shape={np.shape(box)}, len={len(box) if hasattr(box, '__len__') else 'N/A'}")
+                # len(box)はポリゴンの頂点数なので、この条件は不要（常に > 1）
+                # if len(box) > 1:
+                #     filtered_by_box_len += 1
+                #     continue
             else:
                 continue
+            # print(box)
             box = box.reshape(-1, 2)
-            _, sside = self.get_mini_boxes(box.reshape((-1, 1, 2)))
+            _, sside = self.get_mini_boxes(box)
             if sside < self.min_size + 2:
+                filtered_by_size += 1
                 continue
 
             if not isinstance(dest_width, int):
@@ -113,6 +128,8 @@ class SegDetectorRepresenter(Configurable):
                 np.round(box[:, 1] / height * dest_height), 0, dest_height)
             boxes.append(box.tolist())
             scores.append(score)
+        
+        # print(f"DEBUG: boxes={len(boxes)}, filtered_by_points={filtered_by_points}, filtered_by_score={filtered_by_score}, filtered_by_box_len={filtered_by_box_len}, filtered_by_size={filtered_by_size}")
         return boxes, scores
 
     def boxes_from_bitmap(self, pred, _bitmap, dest_width, dest_height):
@@ -164,7 +181,20 @@ class SegDetectorRepresenter(Configurable):
         distance = poly.area * unclip_ratio / poly.length
         offset = pyclipper.PyclipperOffset()
         offset.AddPath(box, pyclipper.JT_ROUND, pyclipper.ET_CLOSEDPOLYGON)
-        expanded = np.array(offset.Execute(distance))
+        try:
+            expanded = np.array(offset.Execute(distance), dtype=np.float32)
+        except ValueError:
+            expanded = np.array(offset.Execute(distance), dtype=object)
+        
+        # print(f"DEBUG unclip raw: expanded type={type(expanded)}, shape={np.shape(expanded)}, len={len(expanded)}")
+        
+        # ポリゴンに穴がある場合でも一つ目のポリゴンだけを返す
+        if len(expanded) > 0:
+            expanded = expanded[0]
+        
+        # print(f"DEBUG unclip after [0]: expanded type={type(expanded)}, shape={np.shape(expanded)}, len={len(expanded) if hasattr(expanded, '__len__') else 'N/A'}")
+        if isinstance(expanded, list):
+            expanded = np.array(expanded)
         return expanded
 
     def get_mini_boxes(self, contour):
@@ -192,10 +222,10 @@ class SegDetectorRepresenter(Configurable):
     def box_score_fast(self, bitmap, _box):
         h, w = bitmap.shape[:2]
         box = _box.copy()
-        xmin = np.clip(np.floor(box[:, 0].min()).astype(np.int), 0, w - 1)
-        xmax = np.clip(np.ceil(box[:, 0].max()).astype(np.int), 0, w - 1)
-        ymin = np.clip(np.floor(box[:, 1].min()).astype(np.int), 0, h - 1)
-        ymax = np.clip(np.ceil(box[:, 1].max()).astype(np.int), 0, h - 1)
+        xmin = np.clip(np.floor(box[:, 0].min()).astype(int), 0, w - 1)
+        xmax = np.clip(np.ceil(box[:, 0].max()).astype(int), 0, w - 1)
+        ymin = np.clip(np.floor(box[:, 1].min()).astype(int), 0, h - 1)
+        ymax = np.clip(np.ceil(box[:, 1].max()).astype(int), 0, h - 1)
 
         mask = np.zeros((ymax - ymin + 1, xmax - xmin + 1), dtype=np.uint8)
         box[:, 0] = box[:, 0] - xmin

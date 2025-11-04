@@ -1,12 +1,12 @@
 import:
-    - '/home/shunsuke_ieda@pip.waseda.ac.jp/workspace/2022/shunsuke_ieda/Master/INANET_ieda/experiments/seg_detector/base.yaml
+    - '/home/shunsuke_ieda@pip.waseda.ac.jp/workspace/2022/shunsuke_ieda/Master/INANET_ieda/experiments/seg_detector/base.yaml'
 package:
     - 'decoders.seg_detector_loss'
 define:
   - name: train_data
     class: ImageDataset
     data_dir:
-        - './datasets/total_text/'
+        - './datasets/total_text'
     data_list:
         - './datasets/total_text/train_list.txt'
     processes:

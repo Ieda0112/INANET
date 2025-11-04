@@ -1,0 +1,11 @@
+/datasets/*
+/_MACOSX/
+~/workspace/2022/shunsuke_ieda/Master/INANET_ieda/datasets/*
+
+*.jpg
+*jpg.txt
+*output.jpg
+results/*
+*.titan
+*.zip
+indiv_memo.txt

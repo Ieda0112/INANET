@@ -1,3 +1,9 @@
+"""
+InceptionNeXt implementation, paper: https://arxiv.org/abs/2303.16900
+
+Some code is borrowed from timm: https://github.com/huggingface/pytorch-image-models
+"""
+
 from functools import partial
 
 import torch
@@ -8,14 +14,7 @@ from timm.models.helpers import checkpoint_seq
 from timm.models.layers import trunc_normal_, DropPath
 from timm.models.registry import register_model
 from timm.models.layers.helpers import to_2tuple
-import time
-import matplotlib.pyplot as plt
 
-"""
-InceptionNeXt implementation, paper: https://arxiv.org/abs/2303.16900
-
-Some code is borrowed from timm: https://github.com/huggingface/pytorch-image-models
-"""
 
 class InceptionDWConv2d(nn.Module):
     """ Inception depthweise convolution
@@ -130,13 +129,14 @@ class MetaNeXtStage(nn.Module):
             self,
             in_chs,
             out_chs,
-            ds_stride=2,
+            # ds_stride=2,
+            ds_stride=1,
             depth=2,
             drop_path_rates=None,
             ls_init_value=1.0,
             token_mixer=nn.Identity,
             act_layer=nn.GELU,
-            norm_layer=None,
+            norm_layer=nn.BatchNorm2d,
             mlp_ratio=4,
     ):
         super().__init__()

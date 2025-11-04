@@ -1,4 +1,5 @@
 from .functions.deform_conv import deform_conv, modulated_deform_conv
+# from .functions.deform_conv import modulated_deform_conv
 from .functions.deform_pool import deform_roi_pooling
 from .modules.deform_conv import (DeformConv, ModulatedDeformConv,
                                   DeformConvPack, ModulatedDeformConvPack)

@@ -118,30 +118,38 @@ class SegDetector_Att_Next(nn.Module):
 
     def forward(self, features, gt=None, masks=None, training=False):
         c2, c3, c4, c5 = features
+        # print(f"入力特徴: c2={c2.shape}, c3={c3.shape}, c4={c4.shape}, c5={c5.shape}")
         e5 = self.feat5(c5)
         e4 = self.feat4(c4)
         e3 = self.feat3(c3)
         e2 = self.feat2(c2)
+        # print(f"Att適用後: e2={e2.shape}, e3={e3.shape}, e4={e4.shape}, e5={e5.shape}")
 
         in5 = self.in5(e5)
         in4 = self.in4(e4)
         in3 = self.in3(e3)
         in2 = self.in2(e2)
+        # print(f"in変換後: in2={in2.shape}, in3={in3.shape}, in4={in4.shape}, in5={in5.shape}")
 
         out4 = self.up5(in5) + in4  # 1/16
         out3 = self.up4(out4) + in3  # 1/8
         out2 = self.up3(out3) + in2  # 1/4
+        # print(f"アップサンプル後: out2={out2.shape}, out3={out3.shape}, out4={out4.shape}")
 
         p5 = self.out5(in5)
         p4 = self.out4(out4)
         p3 = self.out3(out3)
         p2 = self.out2(out2)
+        # print(f"出力ブロック後: p2={p2.shape}, p3={p3.shape}, p4={p4.shape}, p5={p5.shape}")
 
         fuse = torch.cat((p5, p4, p3, p2), 1)
+        # print(f"concat後: fuse={fuse.shape}")
         fuse = self.glo(fuse)
+        # print(f"MetaNeXtStage後: fuse={fuse.shape}")
         # this is the pred module, not binarization module;
         # We do not correct the name due to the trained model.
         binary = self.binarize(fuse)
+        # print(f"binarize後: binary={binary.shape}")
         if self.training:
             result = OrderedDict(binary=binary)
         else:
@@ -152,6 +160,7 @@ class SegDetector_Att_Next(nn.Module):
                         (fuse, nn.functional.interpolate(
                             binary, fuse.shape[2:])), 1)
             thresh = self.thresh(fuse)
+            # print(f"thresh後: thresh={thresh.shape}")
             thresh_binary = self.step_function(binary, thresh)
             result.update(thresh=thresh, thresh_binary=thresh_binary)
         return result

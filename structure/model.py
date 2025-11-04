@@ -32,6 +32,12 @@ def parallelize(model, distributed, local_rank):
 class SegDetectorModel(nn.Module):
     def __init__(self, args, device, distributed: bool = False, local_rank: int = 0):
         super(SegDetectorModel, self).__init__()
+
+        print("=== args の中身 ===")
+        for k, v in args.items():
+            print(f"{k}: {v}")
+        print("===================")
+
         from decoders.seg_detector_loss import SegDetectorLossBuilder
 
         self.model = BasicModel(args)

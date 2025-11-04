@@ -177,7 +177,20 @@ class Eval:
                     if self.args['test_speed']:
                         time_cost = self.report_speed(model, batch, times=50)
                         continue
+                    # images = batch['image']  # Tensor (B,C,H,W)
+                    # print("Input image shape:", images.shape)
+                    # print("min/max:", images.min().item(), images.max().item())
+
+                    # # 必要なら可視化
+                    # import matplotlib.pyplot as plt
+                    # img_np = images[0].cpu().numpy().transpose(1,2,0)  # HWC
+                    # plt.imshow(img_np.astype('uint8'))
+                    # plt.show()
+                    
                     pred = model.forward(batch, training=False)
+                    
+                    # print("Pred shape:", pred.shape)
+                    # print("Pred min/max:", pred.min().item(), pred.max().item())
                     output = self.structure.representer.represent(batch, pred, is_output_polygon=self.args['polygon']) 
                     if not os.path.isdir(self.args['result_dir']):
                         os.mkdir(self.args['result_dir'])
