@@ -33,7 +33,7 @@ for xml_path in xml_files:
             annos.append(','.join(points) + f",{text}")
         # indexを3桁ゼロ埋め
         index_str = str(index).zfill(3)
-        out_path = os.path.join(output_dir, f"{book_title}_{index_str}.jpg.txt")
+        out_path = os.path.join(output_dir, f"{book_title}_{index_str}.jpg")
         with open(out_path, "w", encoding="utf-8") as f:
             for line in annos:
                 f.write(line + "\n")

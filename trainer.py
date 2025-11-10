@@ -1,4 +1,5 @@
 import os
+import datetime
 
 import torch
 from tqdm import tqdm
@@ -22,6 +23,12 @@ class Trainer:
         self.current_lr = 0
 
         self.total = 0
+
+        # --- output.log形式のログファイルパス生成 ---
+        timestamp = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
+        log_dir = os.path.join('outputs', 'CSV')
+        os.makedirs(log_dir, exist_ok=True)
+        self.full_log_path = os.path.join(log_dir, f'training_{timestamp}.log')
 
     def init_device(self):
         if torch.cuda.is_available():
@@ -73,6 +80,7 @@ class Trainer:
             self.logger.epoch(epoch)
             self.total = len(train_data_loader)
 
+            epoch_train_losses = []
             for batch in train_data_loader:
                 self.update_learning_rate(optimizer, epoch, self.steps)
 
@@ -88,6 +96,10 @@ class Trainer:
 
                 self.train_step(model, optimizer, batch,
                                 epoch=epoch, step=self.steps)
+                # loss = self.train_step(model, optimizer, batch,
+                #                       epoch=epoch, step=self.steps)
+                # epoch_train_losses.append(loss)
+
                 if self.logger.verbose:
                     torch.cuda.synchronize()
                 self.logger.report_time('Forwarding ')
@@ -97,6 +109,14 @@ class Trainer:
 
                 self.steps += 1
                 self.logger.report_eta(self.steps, self.total, epoch)
+
+            # --- エポック終了時にtrain loss/metricsを記録・保存 ---
+            avg_loss = sum(epoch_train_losses) / len(epoch_train_losses)
+            with open(self.full_log_path, 'a') as f:
+                f.write(f'TRAIN_EPOCH\tepoch:{epoch}\tavg_loss:{avg_loss:.6f}\n')
+            # --- validation lossもエポックごとに記録 ---
+            if self.experiment.validation:
+                self.validate(validation_loaders, model, epoch, self.steps)
 
             epoch += 1
             if epoch > self.experiment.train.epochs:
@@ -135,9 +155,18 @@ class Trainer:
                 line = '\t'.join(line)
                 log_info = '\t'.join(['step:{:6d}', 'epoch:{:3d}', '{}', 'lr:{:.4f}']).format(step, epoch, line, self.current_lr)
                 self.logger.info(log_info)
+                # --- train loss/metricsをログファイルに追記 ---
+                with open(self.full_log_path, 'a') as f:
+                    f.write(f'TRAIN\tstep:{step}\tepoch:{epoch}\t{line}\tlr:{self.current_lr:.6f}\n')
             else:
                 self.logger.info('step: %6d, epoch: %3d, loss: %.6f, lr: %f' % (
                     step, epoch, loss.item(), self.current_lr))
+                with open(self.full_log_path, 'a') as f:
+                    f.write(f'TRAIN\tstep:{step}\tepoch:{epoch}\tloss:{loss.item():.6f}\tlr:{self.current_lr:.6f}\n')
+            # --- train loss保存タイミングでvalidation lossも保存 ---
+            if self.experiment.validation:
+                validation_loaders = self.experiment.validation.data_loaders
+                self.validate(validation_loaders, model, epoch, step)
             self.logger.add_scalar('loss', loss, step)
             self.logger.add_scalar('learning_rate', self.current_lr, step)
             for name, metric in metrics.items():
@@ -145,6 +174,7 @@ class Trainer:
                 self.logger.info('%s: %6f' % (name, metric.mean()))
 
             self.logger.report_time('Logging')
+        # return loss.item()
 
     def validate(self, validation_loaders, model, epoch, step):
         all_matircs = {}
@@ -167,6 +197,10 @@ class Trainer:
         for key, metric in all_matircs.items():
             self.logger.info('%s : %f (%d)' % (key, metric.avg, metric.count))
         self.logger.metrics(epoch, self.steps, all_matircs)
+        # --- validation loss/metricsをログファイルに追記 ---
+        with open(self.full_log_path, 'a') as f:
+            metric_str = '\t'.join([f'{key}:{metric.avg:.6f}' for key, metric in all_matircs.items()])
+            f.write(f'VALID\tepoch:{epoch}\tstep:{self.steps}\t{metric_str}\n')
         model.train()
         return all_matircs
 
@@ -176,8 +210,7 @@ class Trainer:
         for i, batch in tqdm(enumerate(data_loader), total=len(data_loader)):
             pred = model.forward(batch, training=False)
             output = self.structure.representer.represent(batch, pred)
-            raw_metric, interested = self.structure.measurer.validate_measure(
-                batch, output)
+            raw_metric, interested = self.structure.measurer.validate_measure(batch, output), None
             raw_metrics.append(raw_metric)
 
             if visualize and self.structure.visualizer:
@@ -186,6 +219,8 @@ class Trainer:
                 vis_images.update(vis_image)
         metrics = self.structure.measurer.gather_measure(
             raw_metrics, self.logger)
+        # print("metrics:", metrics)
+        # print("visualization images:", vis_images)
         return metrics, vis_images
 
     def to_np(self, x):

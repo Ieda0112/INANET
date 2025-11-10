@@ -2,6 +2,9 @@
 /_MACOSX/
 ~/workspace/2022/shunsuke_ieda/Master/INANET_ieda/datasets/*
 
+*.pyc
+__pycache__/
+*.png
 *.jpg
 *jpg.txt
 *output.jpg
