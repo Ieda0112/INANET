@@ -56,7 +56,7 @@ define:
     validation: &validate
         class: ValidationSettings
         data_loaders:
-            icdar2015: 
+            totaltext: 
                 class: DataLoader
                 dataset: ^validate_data
                 batch_size: 1

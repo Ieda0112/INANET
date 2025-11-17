@@ -26,7 +26,7 @@ class Trainer:
 
         # --- output.log形式のログファイルパス生成 ---
         timestamp = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
-        log_dir = os.path.join('outputs', 'CSV')
+        log_dir = os.path.join('outputs', 'processing_logs')
         os.makedirs(log_dir, exist_ok=True)
         self.full_log_path = os.path.join(log_dir, f'training_{timestamp}.log')
 
@@ -75,10 +75,28 @@ class Trainer:
         self.logger.report_time('Init')
 
         model.train()
+        with open(self.full_log_path, 'a') as f:
+            timestamp = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
+            f.write(f'Training {timestamp}\n')
         while True:
+            # --- エポック開始 ---
+
             self.logger.info('Training epoch ' + str(epoch))
             self.logger.epoch(epoch)
             self.total = len(train_data_loader)
+
+            # --- validation lossもエポックごとに記録 ---
+            # 確認のために挿入しているだけ
+            if self.experiment.validation:
+                try:
+                    val_metrics, avg_valid_loss = self.validate(validation_loaders, model, epoch, self.steps)
+                    metric_str = ', '.join([f'{k}:{v.avg:.6f}' for k, v in val_metrics.items()])
+                    self.logger.info('Epoch %6d avg_valid_loss: %.6f validation: %s' % (epoch, avg_valid_loss, metric_str))
+                    with open(self.full_log_path, 'a') as f:
+                        metric_tab = '\t'.join([f'{k}:{v.avg:.6f}' for k, v in val_metrics.items()])
+                        f.write(f'VALID_EPOCH_END\tepoch:{epoch}\tstep:{self.steps}\tavg_valid_loss:{avg_valid_loss:.6f}\t{metric_tab}\n')
+                except Exception as e:
+                    self.logger.info('Epoch-end validation failed: %s' % str(e))
 
             epoch_train_losses = []
             for batch in train_data_loader:
@@ -86,19 +104,17 @@ class Trainer:
 
                 self.logger.report_time("Data loading")
 
-                if self.experiment.validation and\
-                        self.steps % self.experiment.validation.interval == 0 and\
-                        self.steps > self.experiment.validation.exempt:
-                    self.validate(validation_loaders, model, epoch, self.steps)
+                # if self.experiment.validation and\
+                #         self.steps % self.experiment.validation.interval == 0 and\
+                #         self.steps > self.experiment.validation.exempt:
+                #     self.validate(validation_loaders, model, epoch, self.steps)
                 self.logger.report_time('Validating ')
                 if self.logger.verbose:
                     torch.cuda.synchronize()
 
-                self.train_step(model, optimizer, batch,
-                                epoch=epoch, step=self.steps)
-                # loss = self.train_step(model, optimizer, batch,
-                #                       epoch=epoch, step=self.steps)
-                # epoch_train_losses.append(loss)
+                loss = self.train_step(model, optimizer, batch,
+                                      epoch=epoch, step=self.steps)
+                epoch_train_losses.append(loss)
 
                 if self.logger.verbose:
                     torch.cuda.synchronize()
@@ -111,22 +127,59 @@ class Trainer:
                 self.logger.report_eta(self.steps, self.total, epoch)
 
             # --- エポック終了時にtrain loss/metricsを記録・保存 ---
-            avg_loss = sum(epoch_train_losses) / len(epoch_train_losses)
+            # 最後のステップの情報をログに記録
+            if hasattr(self, 'last_step_info'):
+                info = self.last_step_info
+                if info['is_dict']:
+                    line = '\t'.join(info['line'])
+                    log_info = '\t'.join(['step:{:6d}', 'epoch:{:3d}', '{}', 'lr:{:.4f}']).format(info['step'], epoch, line, info['lr'])
+                    self.logger.info(log_info)
+                    with open(self.full_log_path, 'a') as f:
+                        f.write(f'TRAIN\tstep:{info["step"]}\tepoch:{epoch}\t{line}\tlr:{info["lr"]:.6f}\n')
+                else:
+                    self.logger.info('step: %6d, epoch: %3d, loss: %.6f, lr: %f' % (
+                        info['step'], epoch, info['loss'], info['lr']))
+                    with open(self.full_log_path, 'a') as f:
+                        f.write(f'TRAIN\tstep:{info["step"]}\tepoch:{epoch}\tloss:{info["loss"]:.6f}\tlr:{info["lr"]:.6f}\n')
+                
+                self.logger.add_scalar('loss', info['loss_tensor'], info['step'])
+                self.logger.add_scalar('learning_rate', info['lr'], info['step'])
+                for name, metric in info['metrics'].items():
+                    self.logger.add_scalar(name, metric, info['step'])
+                    self.logger.info('%s: %6f' % (name, metric))
+
+            # エポック平均train lossを記録
+            print(f"len of epoch train loss:{len(epoch_train_losses)}")
+            if len(epoch_train_losses) > 0:
+                avg_loss = sum(epoch_train_losses) / len(epoch_train_losses)
+            else:
+                avg_loss = float('nan')
+            print(f"avg train loss:{avg_loss}")
+            self.logger.info('Epoch %6d avg_train_loss: %.6f' % (epoch, avg_loss))
             with open(self.full_log_path, 'a') as f:
-                f.write(f'TRAIN_EPOCH\tepoch:{epoch}\tavg_loss:{avg_loss:.6f}\n')
+                f.write(f'TRAIN_EPOCH_END\tepoch:{epoch}\tavg_train_loss:{avg_loss:.6f}\n')
+            
             # --- validation lossもエポックごとに記録 ---
             if self.experiment.validation:
-                self.validate(validation_loaders, model, epoch, self.steps)
+                try:
+                    val_metrics, avg_valid_loss = self.validate(validation_loaders, model, epoch, self.steps)
+                    metric_str = ', '.join([f'{k}:{v.avg:.6f}' for k, v in val_metrics.items()])
+                    self.logger.info('Epoch %6d avg_valid_loss: %.6f validation: %s' % (epoch, avg_valid_loss, metric_str))
+                    with open(self.full_log_path, 'a') as f:
+                        metric_tab = '\t'.join([f'{k}:{v.avg:.6f}' for k, v in val_metrics.items()])
+                        f.write(f'VALID_EPOCH_END\tepoch:{epoch}\tstep:{self.steps}\tavg_valid_loss:{avg_valid_loss:.6f}\t{metric_tab}\n')
+                except Exception as e:
+                    self.logger.info('Epoch-end validation failed: %s' % str(e))
 
             epoch += 1
             if epoch > self.experiment.train.epochs:
                 self.model_saver.save_checkpoint(model, 'final')
                 if self.experiment.validation:
-                    self.validate(validation_loaders, model, epoch, self.steps)
+                    val_metrics, avg_valid_loss = self.validate(validation_loaders, model, epoch, self.steps)
                 self.logger.info('Training done')
                 break
             iter_delta = 0
-
+            # --- エポック終了 ---
 
 
     def train_step(self, model, optimizer, batch, epoch, step, **kwards):
@@ -138,6 +191,9 @@ class Trainer:
             metrics = {}
         elif len(results) == 3:
             l, pred, metrics = results
+        else:
+            print(f"len of result:{len(results[0])}")
+            print(f"result:{results}")
 
         if isinstance(l, dict):
             line = []
@@ -150,31 +206,55 @@ class Trainer:
         loss.backward()
         optimizer.step()
 
-        if step % self.experiment.logger.log_interval == 0:
-            if isinstance(l, dict):
-                line = '\t'.join(line)
-                log_info = '\t'.join(['step:{:6d}', 'epoch:{:3d}', '{}', 'lr:{:.4f}']).format(step, epoch, line, self.current_lr)
-                self.logger.info(log_info)
-                # --- train loss/metricsをログファイルに追記 ---
-                with open(self.full_log_path, 'a') as f:
-                    f.write(f'TRAIN\tstep:{step}\tepoch:{epoch}\t{line}\tlr:{self.current_lr:.6f}\n')
-            else:
-                self.logger.info('step: %6d, epoch: %3d, loss: %.6f, lr: %f' % (
-                    step, epoch, loss.item(), self.current_lr))
-                with open(self.full_log_path, 'a') as f:
-                    f.write(f'TRAIN\tstep:{step}\tepoch:{epoch}\tloss:{loss.item():.6f}\tlr:{self.current_lr:.6f}\n')
-            # --- train loss保存タイミングでvalidation lossも保存 ---
-            if self.experiment.validation:
-                validation_loaders = self.experiment.validation.data_loaders
-                self.validate(validation_loaders, model, epoch, step)
-            self.logger.add_scalar('loss', loss, step)
-            self.logger.add_scalar('learning_rate', self.current_lr, step)
-            for name, metric in metrics.items():
-                self.logger.add_scalar(name, metric.mean(), step)
-                self.logger.info('%s: %6f' % (name, metric.mean()))
+        # エポック終了時のログ用に最後のステップ情報を保存
+        if isinstance(l, dict):
+            line_list = []
+            for key, l_val in l.items():
+                line_list.append('loss_{0}:{1:.4f}'.format(key, l_val.mean()))
+            self.last_step_info = {
+                'step': step,
+                'loss': loss.item(),
+                'loss_tensor': loss,
+                'lr': self.current_lr,
+                'is_dict': True,
+                'line': line_list,
+                'metrics': {name: metric.mean().item() for name, metric in metrics.items()}
+            }
+        else:
+            self.last_step_info = {
+                'step': step,
+                'loss': loss.item(),
+                'loss_tensor': loss,
+                'lr': self.current_lr,
+                'is_dict': False,
+                'metrics': {name: metric.mean().item() for name, metric in metrics.items()}
+            }
 
-            self.logger.report_time('Logging')
-        # return loss.item()
+        # if step % self.experiment.logger.log_interval == 0:
+        #     if isinstance(l, dict):
+        #         line = '\t'.join(line)
+        #         log_info = '\t'.join(['step:{:6d}', 'epoch:{:3d}', '{}', 'lr:{:.4f}']).format(step, epoch, line, self.current_lr)
+        #         self.logger.info(log_info)
+        #         # --- train loss/metricsをログファイルに追記 ---
+        #         with open(self.full_log_path, 'a') as f:
+        #             f.write(f'TRAIN\tstep:{step}\tepoch:{epoch}\t{line}\tlr:{self.current_lr:.6f}\n')
+        #     else:
+        #         self.logger.info('step: %6d, epoch: %3d, loss: %.6f, lr: %f' % (
+        #             step, epoch, loss.item(), self.current_lr))
+        #         with open(self.full_log_path, 'a') as f:
+        #             f.write(f'TRAIN\tstep:{step}\tepoch:{epoch}\tloss:{loss.item():.6f}\tlr:{self.current_lr:.6f}\n')
+        #     # --- train loss保存タイミングでvalidation lossも保存 ---
+        #     if self.experiment.validation:
+        #         validation_loaders = self.experiment.validation.data_loaders
+        #         self.validate(validation_loaders, model, epoch, step)
+        #     self.logger.add_scalar('loss', loss, step)
+        #     self.logger.add_scalar('learning_rate', self.current_lr, step)
+        #     for name, metric in metrics.items():
+        #         self.logger.add_scalar(name, metric.mean(), step)
+        #         self.logger.info('%s: %6f' % (name, metric.mean()))
+
+        #     self.logger.report_time('Logging')
+        return loss.item()
 
     def validate(self, validation_loaders, model, epoch, step):
         all_matircs = {}
@@ -207,8 +287,28 @@ class Trainer:
     def validate_step(self, data_loader, model, visualize=False):
         raw_metrics = []
         vis_images = dict()
+        valid_losses = []
         for i, batch in tqdm(enumerate(data_loader), total=len(data_loader)):
             pred = model.forward(batch, training=False)
+
+            # 損失計算（training=Trueと同じロジックで計算、ただしバックプロパゲーションはしない）
+            try:
+                # model.forwardの結果から損失を取得
+                # 通常、training=Falseでは損失は返されないので、training=Trueで損失を計算する
+                results_with_loss = model.forward(batch, training=True)
+                if isinstance(results_with_loss, (tuple, list)):
+                    if len(results_with_loss) >= 2:
+                        l = results_with_loss[0]
+                        if isinstance(l, dict):
+                            loss_val = sum([l_val.mean().item() for l_val in l.values()])
+                        else:
+                            loss_val = l.mean().item()
+                        valid_losses.append(loss_val)
+                        # 
+            except Exception:
+                # 損失計算に失敗した場合は空リストを返す
+                return {}, {}, []
+
             output = self.structure.representer.represent(batch, pred)
             raw_metric, interested = self.structure.measurer.validate_measure(batch, output), None
             raw_metrics.append(raw_metric)
@@ -221,7 +321,7 @@ class Trainer:
             raw_metrics, self.logger)
         # print("metrics:", metrics)
         # print("visualization images:", vis_images)
-        return metrics, vis_images
+        return metrics, vis_images, valid_losses
 
     def to_np(self, x):
         return x.cpu().data.numpy()

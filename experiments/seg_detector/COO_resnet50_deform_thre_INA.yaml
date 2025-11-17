@@ -52,12 +52,12 @@ define:
             learning_rate:  
                 class: DecayLearningRate
                 epochs: 1200 # 1200
-        epochs: 1200 # 1200
+        epochs: 30 # 1200 学習エポック数
 
     validation: &validate
         class: ValidationSettings
         data_loaders:
-            icdar2015: 
+            COO: 
                 class: DataLoader
                 dataset: ^validate_data
                 batch_size: 1
