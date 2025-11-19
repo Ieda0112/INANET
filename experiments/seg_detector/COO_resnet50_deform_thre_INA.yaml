@@ -30,7 +30,7 @@ define:
         data_loader: 
             class: DataLoader
             dataset: ^train_data
-            batch_size: 6
+            batch_size: 2
             num_workers: 0
         checkpoint: 
             class: Checkpoint
