@@ -56,6 +56,8 @@ class Logger(Configurable):
         self.logged = -1
         self.speed = None
         self.eta_time = None
+        # visualize サブディレクトリ（タイムスタンプ付き）は最初の保存時に作成する
+        self._vis_subdir = None
 
     def _make_storage(self):
         application = os.path.basename(os.getcwd())
@@ -167,10 +169,20 @@ class Logger(Configurable):
         cv2.imwrite(os.path.join(self.vis_dir(), name+'.jpg'), result)
 
     def vis_dir(self):
-        vis_dir = os.path.join(self.log_dir, self.VISUALIZE_NAME)
-        if not os.path.exists(vis_dir):
-            os.mkdir(vis_dir)
-        return vis_dir
+        # 既に時刻付きサブディレクトリを作成済みならそれを返す
+        if getattr(self, '_vis_subdir', None) is not None:
+            return self._vis_subdir
+
+        base_vis = os.path.join(self.log_dir, self.VISUALIZE_NAME)
+        if not os.path.exists(base_vis):
+            os.makedirs(base_vis)
+
+        # 時刻を含むフォルダ名を作る（例: 20251119_153045）
+        time_str = datetime.now().strftime('%Y%m%d_%H%M%S')
+        self._vis_subdir = os.path.join(base_vis, time_str)
+        if not os.path.exists(self._vis_subdir):
+            os.makedirs(self._vis_subdir)
+        return self._vis_subdir
 
     def save_image_dict(self, images, max_size=1024):
         for file_name, image in images.items():

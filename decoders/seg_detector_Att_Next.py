@@ -150,11 +150,11 @@ class SegDetector_Att_Next(nn.Module):
         # We do not correct the name due to the trained model.
         binary = self.binarize(fuse)
         # print(f"binarize後: binary={binary.shape}")
-        if self.training:
+        if training:  # self.training ではなく引数の training を使う
             result = OrderedDict(binary=binary)
         else:
             return binary
-        if self.adaptive and self.training:
+        if self.adaptive and training:  # self.training ではなく引数の training を使う
             if self.serial:
                 fuse = torch.cat(
                         (fuse, nn.functional.interpolate(

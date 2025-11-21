@@ -1,5 +1,4 @@
 # このファイルはtotaltext_resnet50_deform_thre_INA.yamlを参考に作成しました。
-# COOデータセット用に修正しています。
 import:
     - 'experiments/seg_detector/base_COO.yaml'
 package: []
@@ -31,7 +30,7 @@ define:
         data_loader: 
             class: DataLoader
             dataset: ^train_data
-            batch_size: 4
+            batch_size: 2
             num_workers: 0
         checkpoint: 
             class: Checkpoint
@@ -47,28 +46,15 @@ define:
             class: OptimizerScheduler
             optimizer: "SGD"
             optimizer_args:
-                lr: 0.007
+                lr: 0.001
                 momentum: 0.9
                 weight_decay: 0.0001
             learning_rate:  
                 class: DecayLearningRate
-                lr: 0.007
                 epochs: 1200 # 1200
-        epochs: 15 # 1200 学習エポック数
+        epochs: 30 # 1200 学習エポック数
 
-    validation:
-        class: ValidationSettings
-        data_loaders:
-            COO:
-                class: DataLoader
-                dataset: ^validate_data_trainlike
-                batch_size: 1
-                num_workers: 0
-        visualize: false
-        interval: 4500
-        exempt: 1
-
-    evaluation:
+    validation: &validate
         class: ValidationSettings
         data_loaders:
             COO: 
@@ -86,4 +72,6 @@ define:
         class: Logger
         verbose: true
         level: info
-        log_interval: 100
+        log_interval: 450
+
+    evaluation: *validate

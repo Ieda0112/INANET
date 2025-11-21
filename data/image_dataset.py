@@ -39,6 +39,10 @@ class ImageDataset(data.Dataset, Configurable):
             if self.is_training:
                 image_path=[self.data_dir[i]+'/train_images/'+timg.strip() for timg in image_list]
                 gt_path=[self.data_dir[i]+'/train_gts/'+timg.strip()+'.txt' for timg in image_list]
+            elif 'valid' in self.data_list[i]:
+                # Validation data uses valid_images and valid_gts
+                image_path=[self.data_dir[i]+'/valid_images/'+timg.strip() for timg in image_list]
+                gt_path=[self.data_dir[i]+'/valid_gts/'+timg.strip()+'.txt' for timg in image_list]
             else:
                 image_path=[self.data_dir[i]+'/test_images/'+timg.strip() for timg in image_list]
                 print(self.data_dir[i])

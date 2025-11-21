@@ -191,6 +191,18 @@ class L1BalanceCELoss(nn.Module):
         self.bce_scale = bce_scale
 
     def forward(self, pred, batch):
+        # Debug: print pred structure
+        # print(f"DEBUG L1BalanceCELoss: type(pred) = {type(pred)}")
+        # if isinstance(pred, dict):
+        #     print(f"DEBUG L1BalanceCELoss: pred.keys() = {pred.keys()}")
+        #     for k in pred.keys():
+        #         if isinstance(pred[k], torch.Tensor):
+        #             print(f"DEBUG L1BalanceCELoss: pred['{k}'].shape = {pred[k].shape}")
+        # else:
+        #     print(f"DEBUG L1BalanceCELoss: pred is not a dict, it's {type(pred)}")
+        #     if isinstance(pred, torch.Tensor):
+        #         print(f"DEBUG L1BalanceCELoss: pred.shape = {pred.shape}")
+        
         bce_loss = self.bce_loss(pred['binary'], batch['gt'], batch['mask'])
         metrics = dict(bce_loss=bce_loss)
         if 'thresh' in pred:

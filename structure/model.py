@@ -56,14 +56,20 @@ class SegDetectorModel(nn.Module):
         return os.path.join('seg_detector', args['backbone'], args['loss_class'])
 
     def forward(self, batch, training=True):
+        # print(f"=== SegDetectorModel.forward called (training={training}) ===")
         if isinstance(batch, dict):
             data = batch['image'].to(self.device)
         else:
             data = batch.to(self.device)
         data = data.float()
-        pred = self.model(data, training=self.training)
 
-        if self.training:
+        # Respect the `training` argument passed to forward().
+        # This lets callers request loss computation during validation
+        # without having to toggle the module's global training mode.
+        pred = self.model(data, training=training)
+
+        if training:
+            # Move batch tensors to device for loss computation.
             for key, value in batch.items():
                 if value is not None:
                     if hasattr(value, 'to'):
@@ -71,5 +77,6 @@ class SegDetectorModel(nn.Module):
             loss_with_metrics = self.criterion(pred, batch)
             loss, metrics = loss_with_metrics
             return loss, pred, metrics
+            
         return pred
 
