@@ -7,11 +7,11 @@ define:
   - name: train_data
     class: ImageDataset
     data_dir:
-        # - './datasets/COO'
-        - './datasets/mini_COO'
+        - './datasets/COO'
+        # - './datasets/mini_COO'
     data_list:
-        # - './datasets/COO/train_list.txt'
-        - './datasets/mini_COO/train_list.txt'
+        - './datasets/COO/train_list.txt'
+        # - './datasets/mini_COO/train_list.txt'
     processes:
         - class: AugmentDetectionData
         # データ拡張の説明:
@@ -37,11 +37,11 @@ define:
   - name: validate_data_trainlike
     class: ImageDataset
     data_dir:
-        # - './datasets/COO'
-        - './datasets/mini_COO'
+        - './datasets/COO'
+        # - './datasets/mini_COO'
     data_list:
-        # - './datasets/COO/valid_list.txt'
-        - './datasets/mini_COO/valid_list.txt'
+        - './datasets/COO/valid_list.txt'
+        # - './datasets/mini_COO/valid_list.txt'
     processes:
         - class: AugmentDetectionData
           # validate時はランダム要素をなくして再現性を確保
@@ -49,9 +49,9 @@ define:
               - ['Resize', {'width': 640, 'height': 640}]
           only_resize: True
           keep_ratio: False
-        - class: RandomCropData
-          size: [640, 640]
-          max_tries: 10
+        # - class: RandomCropData
+        #   size: [640, 640]
+        #   max_tries: 10
         - class: MakeICDARData
         - class: MakeSegDetectionData
         - class: MakeBorderMap
@@ -62,11 +62,11 @@ define:
   - name: validate_data
     class: ImageDataset
     data_dir:
-        # - './datasets/COO'
-        - './datasets/mini_COO'
+        - './datasets/COO'
+        # - './datasets/mini_COO'
     data_list:
-        # - './datasets/COO/test_list.txt'
-        - './datasets/mini_COO/test_list.txt'
+        - './datasets/COO/test_list.txt'
+        # - './datasets/mini_COO/test_list.txt'
     processes:
         - class: AugmentDetectionData
           augmenter_args:

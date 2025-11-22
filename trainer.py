@@ -141,12 +141,12 @@ class Trainer:
                     log_info = '\t'.join(['step:{:6d}', 'epoch:{:3d}', '{}', 'lr:{:.4f}']).format(info['step'], epoch, line, info['lr'])
                     self.logger.info(log_info)
                     with open(self.full_log_path, 'a') as f:
-                        f.write(f'TRAIN\tstep:{info["step"]}\tepoch:{epoch}\t{line}\tlr:{info["lr"]:.6f}\n')
+                        f.write(f'TRAIN\tstep:{info["step"]:6d}\tepoch:{epoch}\t{line}\tlr:{info["lr"]:.6f}\n')
                 else:
                     self.logger.info('step: %6d, epoch: %3d, loss: %.6f, lr: %f' % (
                         info['step'], epoch, info['loss'], info['lr']))
                     with open(self.full_log_path, 'a') as f:
-                        f.write(f'TRAIN\tstep:{info["step"]}\tepoch:{epoch}\tloss:{info["loss"]:.6f}\tlr:{info["lr"]:.6f}\n')
+                        f.write(f'TRAIN\tstep:{info["step"]:6d}\tepoch:{epoch:3d}\tloss:{info["loss"]:.6f}\tlr:{info["lr"]:.6f}\n')
                 
                 self.logger.add_scalar('loss', info['loss_tensor'], info['step'])
                 self.logger.add_scalar('learning_rate', info['lr'], info['step'])

@@ -54,7 +54,7 @@ define:
                 class: DecayLearningRate
                 lr: 0.007
                 epochs: 1200 # 1200
-        epochs: 15 # 1200 学習エポック数
+        epochs: 50 # 1200 学習エポック数
 
     validation:
         class: ValidationSettings
@@ -86,4 +86,4 @@ define:
         class: Logger
         verbose: true
         level: info
-        log_interval: 100
+        log_interval: 1000

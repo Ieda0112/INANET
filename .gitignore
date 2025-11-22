@@ -12,3 +12,5 @@ results/*
 *.titan
 *.zip
 indiv_memo.txt
+outputs/processing_logs/*
+model_epoch*
