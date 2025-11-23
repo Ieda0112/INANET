@@ -1,0 +1,5 @@
+# ninja log v6
+4	16196	1760505421623622762	/mnt/nfs/workspace/2022/shunsuke_ieda/Master/INANET_ieda/assets/ops/dcn/build/temp.linux-x86_64-cpython-38/src/deform_conv_cuda_kernel.o	a8698dad0d583525
+10	19494	1760506898063312668	/mnt/nfs/workspace/2022/shunsuke_ieda/Master/INANET_ieda/assets/ops/dcn/build/temp.linux-x86_64-cpython-38/src/deform_conv_cuda.o	57be984e041feea0
+6	15865	1760506918530495314	/mnt/nfs/workspace/2022/shunsuke_ieda/Master/INANET_ieda/assets/ops/dcn/build/temp.linux-x86_64-cpython-38/src/deform_pool_cuda_kernel.o	9b4d8be914b2722a
+5	18765	1760506918530495314	/mnt/nfs/workspace/2022/shunsuke_ieda/Master/INANET_ieda/assets/ops/dcn/build/temp.linux-x86_64-cpython-38/src/deform_pool_cuda.o	df82371fcc8e12a0

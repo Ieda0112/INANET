@@ -1,0 +1,285 @@
+'2025-11-12 16:49:53.759079':
+  epoch: 0
+  icdar2015/fmeasure:
+    count: 1
+    value: 0.0
+  icdar2015/precision:
+    count: 1309
+    value: 0.0
+  icdar2015/recall:
+    count: 1309
+    value: 0.0
+  steps: 0
+'2025-11-12 16:55:10.648489':
+  epoch: 0
+  icdar2015/fmeasure:
+    count: 1
+    value: 0.0
+  icdar2015/precision:
+    count: 1309
+    value: 0.0
+  icdar2015/recall:
+    count: 1309
+    value: 0.0
+  steps: 0
+'2025-11-12 17:25:38.177118':
+  COO/fmeasure:
+    count: 1
+    value: 0.0
+  COO/precision:
+    count: 1309
+    value: 0.0
+  COO/recall:
+    count: 1309
+    value: 0.0
+  epoch: 0
+  steps: 0
+'2025-11-12 17:34:29.093890':
+  COO/fmeasure:
+    count: 1
+    value: 0.0
+  COO/precision:
+    count: 1309
+    value: 0.0
+  COO/recall:
+    count: 1309
+    value: 0.0
+  epoch: 0
+  steps: 0
+'2025-11-12 17:39:38.233433':
+  COO/fmeasure:
+    count: 1
+    value: 0.0
+  COO/precision:
+    count: 1309
+    value: 0.0
+  COO/recall:
+    count: 1309
+    value: 0.0
+  epoch: 0
+  steps: 0
+'2025-11-12 18:30:28.930729':
+  COO/fmeasure:
+    count: 1
+    value: 0.0
+  COO/precision:
+    count: 1309
+    value: 0.0
+  COO/recall:
+    count: 1309
+    value: 0.0
+  epoch: 0
+  steps: 0
+'2025-11-12 18:35:49.078403':
+  COO/fmeasure:
+    count: 1
+    value: 0.0
+  COO/precision:
+    count: 1309
+    value: 0.0
+  COO/recall:
+    count: 1309
+    value: 0.0
+  epoch: 0
+  steps: 0
+'2025-11-12 18:40:01.728523':
+  COO/fmeasure:
+    count: 1
+    value: 0.0
+  COO/precision:
+    count: 1309
+    value: 0.0
+  COO/recall:
+    count: 1309
+    value: 0.0
+  epoch: 0
+  steps: 0
+'2025-11-12 18:52:53.358629':
+  COO/fmeasure:
+    count: 1
+    value: 0.0
+  COO/precision:
+    count: 1309
+    value: 0.0
+  COO/recall:
+    count: 1309
+    value: 0.0
+  epoch: 0
+  steps: 450
+'2025-11-12 18:56:42.091092':
+  COO/fmeasure:
+    count: 1
+    value: 0.0
+  COO/precision:
+    count: 1309
+    value: 0.0
+  COO/recall:
+    count: 1309
+    value: 0.0
+  epoch: 0
+  steps: 0
+'2025-11-12 19:09:55.602732':
+  COO/fmeasure:
+    count: 1
+    value: 0.0
+  COO/precision:
+    count: 1309
+    value: 0.0
+  COO/recall:
+    count: 1309
+    value: 0.0
+  epoch: 0
+  steps: 0
+'2025-11-12 19:44:09.458106':
+  COO/fmeasure:
+    count: 1
+    value: 0.0
+  COO/precision:
+    count: 1309
+    value: 0.0
+  COO/recall:
+    count: 1309
+    value: 0.0
+  epoch: 0
+  steps: 1017
+'2025-11-12 19:46:53.880982':
+  COO/fmeasure:
+    count: 1
+    value: 0.0
+  COO/precision:
+    count: 1309
+    value: 0.0
+  COO/recall:
+    count: 1309
+    value: 0.0
+  epoch: 1
+  steps: 1017
+'2025-11-12 19:54:49.675929':
+  COO/fmeasure:
+    count: 1
+    value: 0.0
+  COO/precision:
+    count: 1309
+    value: 0.0
+  COO/recall:
+    count: 1309
+    value: 0.0
+  epoch: 0
+  steps: 0
+'2025-11-12 20:23:58.668746':
+  COO/fmeasure:
+    count: 1
+    value: 0.0
+  COO/precision:
+    count: 1309
+    value: 0.0
+  COO/recall:
+    count: 1309
+    value: 0.0
+  epoch: 0
+  steps: 1017
+'2025-11-12 20:26:43.582910':
+  COO/fmeasure:
+    count: 1
+    value: 0.0
+  COO/precision:
+    count: 1309
+    value: 0.0
+  COO/recall:
+    count: 1309
+    value: 0.0
+  epoch: 1
+  steps: 1017
+'2025-11-12 21:02:18.943809':
+  COO/fmeasure:
+    count: 1
+    value: 0.0
+  COO/precision:
+    count: 1309
+    value: 0.0
+  COO/recall:
+    count: 1309
+    value: 0.0
+  epoch: 1
+  steps: 2034
+'2025-11-12 21:05:02.737538':
+  COO/fmeasure:
+    count: 1
+    value: 0.0
+  COO/precision:
+    count: 1309
+    value: 0.0
+  COO/recall:
+    count: 1309
+    value: 0.0
+  epoch: 2
+  steps: 2034
+'2025-11-13 01:12:30.842472':
+  COO/fmeasure:
+    count: 1
+    value: 0.0
+  COO/precision:
+    count: 1309
+    value: 0.0
+  COO/recall:
+    count: 1309
+    value: 0.0
+  epoch: 0
+  steps: 0
+'2025-11-16 16:29:49.563808':
+  epoch: 0
+  steps: 0
+'2025-11-16 16:38:17.283802':
+  epoch: 0
+  steps: 0
+'2025-11-16 17:09:30.375909':
+  epoch: 0
+  steps: 0
+'2025-11-16 17:14:02.118376':
+  epoch: 0
+  steps: 450
+'2025-11-16 17:18:29.130105':
+  epoch: 0
+  steps: 900
+'2025-11-16 17:22:52.779129':
+  epoch: 0
+  steps: 1350
+'2025-11-16 17:27:12.470586':
+  epoch: 0
+  steps: 1800
+'2025-11-16 17:31:32.763637':
+  epoch: 0
+  steps: 2250
+'2025-11-16 17:35:51.566878':
+  epoch: 0
+  steps: 2700
+'2025-11-16 17:39:19.430363':
+  epoch: 0
+  steps: 3051
+'2025-11-16 17:39:47.055693':
+  epoch: 1
+  steps: 3051
+'2025-11-16 17:41:04.959738':
+  epoch: 1
+  steps: 3150
+'2025-11-16 17:45:21.362148':
+  epoch: 1
+  steps: 3600
+'2025-11-16 19:24:43.983383':
+  epoch: 0
+  steps: 3051
+'2025-11-16 19:25:11.571687':
+  epoch: 1
+  steps: 3051
+'2025-11-16 19:51:29.927831':
+  epoch: 1
+  steps: 6102
+'2025-11-16 19:51:57.627261':
+  epoch: 2
+  steps: 6102
+'2025-11-16 20:22:07.511606':
+  epoch: 0
+  steps: 3051
+'2025-11-16 20:22:35.027419':
+  epoch: 1
+  steps: 3051
