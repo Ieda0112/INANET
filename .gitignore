@@ -14,3 +14,5 @@ results/*
 indiv_memo.txt
 outputs/processing_logs/*
 model_epoch*
+outputs/workspace/**/model/
+*.pth
