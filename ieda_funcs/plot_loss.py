@@ -1,130 +1,124 @@
 #!/usr/bin/env python3
 """
-Parse a log file and plot loss vs step.
+Plot epoch-level avg_train_loss and avg_valid_loss from a training log.
+Saves <logname>_epoch_losses.png next to the log file.
 Usage:
-  python plot_loss.py [path/to/1.txt] [--smooth N]
-Saves `loss_plot.png` in the same folder.
+  python plot_epoch_losses.py path/to/training_YYYYMMDD_HHMMSS.log
 """
 import re
 import sys
 from pathlib import Path
+import math
 
-INPUT_DEFAULT = "2025-10-23_16:49:30,151.txt"
-
-def parse_lines(path):
-    pattern = re.compile(r"step:\s*([0-9]+),\s*epoch:\s*([0-9]+),\s*loss:\s*([-+]?\d*\.?\d+(?:[eE][-+]?\d+)?)")
-    steps = []
-    losses = []
-    epochs = []
-    with open(path, "r", encoding="utf-8", errors="ignore") as f:
+def parse_epoch_lines(path):
+    train_pattern = re.compile(r"TRAIN_EPOCH_END\s+epoch:\s*([0-9]+).*avg_train_loss:([-+]?[0-9]*\.?[0-9]+(?:[eE][-+]?[0-9]+)?)")
+    valid_pattern = re.compile(r"VALID_EPOCH_END\s+epoch:\s*([0-9]+).*avg_valid_loss:([-+]?[0-9]*\.?[0-9]+(?:[eE][-+]?[0-9]+)?)")
+    e2train = {}
+    e2valid = {}
+    with open(path, 'r', encoding='utf-8', errors='ignore') as f:
         for ln in f:
-            m = pattern.search(ln)
+            m = train_pattern.search(ln)
             if m:
-                step = int(m.group(1))
-                epoch = int(m.group(2))
-                loss = float(m.group(3))
-                steps.append(step)
-                epochs.append(epoch)
-                losses.append(loss)
-    return steps, epochs, losses
-
-
-def moving_average(x, w):
-    if w <= 1:
-        return x
-    import numpy as np
-    arr = np.array(x, dtype=float)
-    if len(arr) < w:
-        return arr.tolist()
-    cumsum = np.cumsum(np.insert(arr, 0, 0))
-    ma = (cumsum[w:] - cumsum[:-w]) / float(w)
-    # prepend first values to keep same length
-    pad = [arr[0]] * (w-1)
-    return (pad + ma.tolist())
+                ep = int(m.group(1))
+                val = float(m.group(2))
+                e2train[ep] = val
+            m2 = valid_pattern.search(ln)
+            if m2:
+                ep = int(m2.group(1))
+                val = float(m2.group(2))
+                e2valid[ep] = val
+    return e2train, e2valid
 
 
 def main():
     import argparse
-    p = argparse.ArgumentParser(description="Plot loss vs step from training log")
-    p.add_argument("logfile", nargs="?", default=INPUT_DEFAULT, help="path to log file (default: 1.txt)")
-    p.add_argument("--smooth", type=int, default=1, help="moving average window (default 1 = no smoothing)")
-    args = p.parse_args()
-
-    path = Path(args.logfile)
-    if not path.exists():
-        print(f"Log file not found: {path}")
+    p = None
+    parser = argparse.ArgumentParser(description='Plot epoch avg train/valid loss from training log')
+    parser.add_argument('logfile', help='path to training log (.log)')
+    parser.add_argument('--series', choices=['train', 'valid', 'both'], default='both',
+                        help='which series to plot (default: both)')
+    parser.add_argument('--xstep', type=int, default=5, help='x-axis tick step in epochs (default 5)')
+    args = parser.parse_args()
+    p = Path(args.logfile)
+    if not p.exists():
+        print(f"Log file not found: {p}")
         sys.exit(2)
 
-    steps, epochs, losses = parse_lines(path)
-    if not steps:
-        print(f"No step/loss lines found in {path}")
+    e2train, e2valid = parse_epoch_lines(p)
+    if not e2train and not e2valid:
+        print("No epoch lines found in the log.")
         sys.exit(0)
 
-    # Optionally smooth
-    if args.smooth and args.smooth > 1:
-        try:
-            smooth_losses = moving_average(losses, args.smooth)
-        except Exception as e:
-            print("Error applying smoothing: ", e)
-            smooth_losses = losses
-    else:
-        smooth_losses = losses
+    epochs = sorted(set(list(e2train.keys()) + list(e2valid.keys())))
+    if not epochs:
+        print("No epochs parsed.")
+        sys.exit(0)
+    min_ep = min(epochs)
+    max_ep = max(epochs)
 
-    # Plot
+    # build arrays aligned to epochs
+    xs = epochs
+    train_vals = [e2train.get(e, float('nan')) for e in xs]
+    valid_vals = [e2valid.get(e, float('nan')) for e in xs]
+
+    # plotting
     try:
         import matplotlib
         matplotlib.use('Agg')
-    except Exception:
-        pass
-    try:
         import matplotlib.pyplot as plt
     except Exception as e:
-        print("matplotlib is required to create the plot. Install with: pip install matplotlib")
+        print('matplotlib is required to create the plot. Install with: pip install matplotlib')
         raise
 
-    # --- Plot: loss vs step (existing) ---
-    plt.figure(figsize=(10,4))
-    # plt.plot(steps, losses, color='lightgray', linewidth=1, label='raw')
-    if args.smooth and args.smooth > 1:
-        plt.plot(steps[:len(smooth_losses)], smooth_losses, color='red', linewidth=1, label=f'smoothed(w={args.smooth})')
-    else:
-        plt.plot(steps, losses, color='blue', linewidth=1, label='loss')
-    plt.xlabel('step')
-    plt.ylabel('loss')
-    plt.title(f'Learning Process')
-    plt.legend()
-    plt.grid(True, alpha=0.3)
-
-    out_step = path.parent / 'loss_plot.png'
-    plt.tight_layout()
-    plt.savefig(out_step, dpi=150)
-    print(f"Saved step plot to: {out_step}  (points plotted: {len(steps)})")
-
-    # --- Plot: loss vs epoch (aggregate averages per epoch) ---
-    # build epoch -> list(losses)
-    from collections import defaultdict
-    e2l = defaultdict(list)
-    for e, l in zip(epochs, losses):
-        e2l[e].append(l)
-    epoch_sorted = sorted(e2l.keys())
-    epoch_avg = [sum(e2l[e]) / len(e2l[e]) for e in epoch_sorted]
-
-    plt.figure(figsize=(10,4))
-    # # raw epoch points (could be multiple per epoch)
-    # plt.scatter(epochs, losses, color='lightgray', s=10, label='raw')
-    # averaged per epoch
-    plt.plot(epoch_sorted, epoch_avg, color='blue', linewidth=1.5, label='epoch_avg')
+    plt.figure(figsize=(10, 5))
+    # choose which series to plot
+    to_plot = args.series if 'args' in locals() else 'both'
+    if to_plot in ('both', 'train'):
+        plt.plot(xs, train_vals, marker='o', linestyle='-', color='blue', label='avg_train_loss')
+    if to_plot in ('both', 'valid'):
+        plt.plot(xs, valid_vals, marker='o', linestyle='-', color='orange', label='avg_valid_loss')
     plt.xlabel('epoch')
     plt.ylabel('loss')
-    plt.title(f'Learning Process')
-    plt.legend()
+    # If user requested only the train series, keep y-axis autoscaled.
+    # Otherwise (both or valid) force y-axis to start from 0.
+    if 'args' in locals() and args.series == 'train':
+        pass
+    else:
+        plt.ylim(bottom=0)
+    # title: filename without .log
+    title = p.name
+    if title.endswith('.log'):
+        title = title[:-4]
+    plt.title(title)
     plt.grid(True, alpha=0.3)
+    plt.legend()
 
-    out_epoch = path.parent / 'loss_plot_epoch.png'
+    # set x-axis range
+    left = 0
+    right = max_ep
+    plt.xlim(left, right)
+    # show tick labels every xstep epochs (and always include the rightmost epoch)
+    step = args.xstep if 'args' in locals() else 5
+    ticks = list(range(left, right+1, step))
+    if len(ticks) == 0 or ticks[-1] != right:
+        # ensure the final epoch is labeled
+        ticks.append(right)
+    plt.xticks(ticks)
+
+    # save under outputs/training_graph
+    from pathlib import Path as _P
+    graph_dir = _P('outputs') / 'training_graph'
+    graph_dir.mkdir(parents=True, exist_ok=True)
+    suffix = ''
+    if 'args' in locals():
+        if args.series == 'train':
+            suffix = '_train'
+        elif args.series == 'valid':
+            suffix = '_valid'
+    out_path = graph_dir / (p.stem + suffix + '.png')
     plt.tight_layout()
-    plt.savefig(out_epoch, dpi=150)
-    print(f"Saved epoch plot to: {out_epoch}  (epochs plotted: {len(epoch_sorted)})")
-
+    plt.savefig(out_path, dpi=150)
+    print(f"Saved epoch losses plot to: {out_path}")
 
 if __name__ == '__main__':
     main()

@@ -2,6 +2,7 @@
 # COOデータセット用に修正しています。
 import:
     - 'experiments/seg_detector/base_COO.yaml'
+    # - 'experiments/seg_detector/base_miniCOO.yaml'
 package: []
 define:
   - name: 'Experiment'
