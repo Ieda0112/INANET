@@ -1,9 +1,9 @@
 # このファイルはtotaltext_resnet50_deform_thre_INA.yamlを参考に作成しました。
 # COOデータセット用に修正しています。
 import:
-    # - 'experiments/seg_detector/base_COO.yaml'
     # - 'experiments/seg_detector/base_miniCOO.yaml'
     - 'experiments/seg_detector/base_halfCOO.yaml'
+    # - 'experiments/seg_detector/base_COO.yaml'
 package: []
 define:
   - name: 'Experiment'
@@ -47,14 +47,13 @@ define:
             signal_path: save
         scheduler: 
             class: OptimizerScheduler
-            optimizer: "SGD"
+            optimizer: "AdamW"
             optimizer_args:
-                lr: 0.005
-                momentum: 0.9
-                weight_decay: 0.0001
+                lr: 3e-4
+                weight_decay: 0.01
             learning_rate:  
                 class: DecayLearningRate
-                lr: 0.005
+                lr: 3e-4
                 epochs: 50 # 1200
         epochs: 50 # 1200 学習エポック数
 

@@ -3,7 +3,7 @@
 Plot epoch-level avg_train_loss and avg_valid_loss from a training log.
 Saves <logname>_epoch_losses.png next to the log file.
 Usage:
-  python plot_epoch_losses.py path/to/training_YYYYMMDD_HHMMSS.log
+  python plot_loss.py path/to/training_YYYYMMDD_HHMMSS.log
 """
 import re
 import sys
@@ -76,15 +76,21 @@ def main():
     if to_plot in ('both', 'train'):
         plt.plot(xs, train_vals, marker='o', linestyle='-', color='blue', label='avg_train_loss')
     if to_plot in ('both', 'valid'):
-        plt.plot(xs, valid_vals, marker='o', linestyle='-', color='orange', label='avg_valid_loss')
+        plt.plot(xs, valid_vals, marker='x', linestyle='-', color='orange', label='avg_valid_loss')
     plt.xlabel('epoch')
     plt.ylabel('loss')
     # If user requested only the train series, keep y-axis autoscaled.
     # Otherwise (both or valid) force y-axis to start from 0.
     if 'args' in locals() and args.series == 'train':
         pass
+    elif 'args' in locals() and args.series == 'valid':
+        pass
+    elif 'args' in locals() and args.series == 'both':
+        pass
     else:
         plt.ylim(bottom=0)
+    # plt.ylim(top=5.0)
+    # plt.ylim(bottom=4.5)
     # title: filename without .log
     title = p.name
     if title.endswith('.log'):

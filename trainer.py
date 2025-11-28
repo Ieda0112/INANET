@@ -62,7 +62,7 @@ class Trainer:
             #     print(f"  {name}: {loader}")
 
         total_params = sum(p.numel() for p in model.parameters())
-        print('参数量为：')
+        # print('参数量为：')
         print(f'{total_params:,} total parameters.')
 
         self.steps = 0
@@ -160,7 +160,7 @@ class Trainer:
                 avg_loss = sum(epoch_train_losses) / len(epoch_train_losses)
             else:
                 avg_loss = float('nan')
-            print(f"avg train loss:{avg_loss}")
+            # print(f"avg train loss:{avg_loss}")
             self.logger.info('Epoch %6d avg_train_loss: %.6f' % (epoch, avg_loss))
             with open(self.full_log_path, 'a') as f:
                 f.write(f'TRAIN_EPOCH_END\tepoch:{epoch:3d}\tstep:{self.steps:6d}\tavg_train_loss:{avg_loss:.6f}\n')
@@ -182,6 +182,9 @@ class Trainer:
                 if self.experiment.validation:
                     self.validate(validation_loaders, model, epoch, self.steps)
                 self.logger.info('Training done')
+                with open(self.full_log_path, 'a') as f:
+                    timestamp = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
+                    f.write(f'Training done {timestamp}\n')
                 break
             iter_delta = 0
             # --- エポック終了 ---
@@ -367,6 +370,7 @@ class Trainer:
                 #     # traceback.print_exc()
                 #     # 損失計算に失敗した場合は空リストを返す
                 #     return [], [], []
+                # self.logger.report_eta(self.steps, self.total, epoch)
         
         # print("metrics:", metrics)
         # print("visualization images:", vis_images)
@@ -386,7 +390,7 @@ class Trainer:
                 self.logger.images(
                     os.path.join('vis', name), vis_images, step)
             else:
-                metrics, vis_images = self.validate_step(loader, model, False)
+                metrics, vis_images = self.test_step(loader, model, False)
             for _key, metric in metrics.items():
                 key = name + '/' + _key
                 if key in all_matircs:
@@ -405,7 +409,7 @@ class Trainer:
         return all_matircs
 
     def test_step(self, data_loader, model, visualize=False):
-        # print("validate_step: entered")
+        # print("test_step: entered")
         raw_metrics = []
         vis_images = dict()
         for i, batch in tqdm(enumerate(data_loader), total=len(data_loader)):
