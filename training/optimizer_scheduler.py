@@ -15,8 +15,22 @@ class OptimizerScheduler(Configurable):
             self.optimizer_args['lr'] = cmd['lr']
 
     def create_optimizer(self, parameters):
+        # Convert optimizer_args values to appropriate numeric types
+        # (YAML may parse scientific notation like 3e-4 as strings)
+        cleaned_args = {}
+        for key, value in self.optimizer_args.items():
+            if isinstance(value, str):
+                try:
+                    # Try to convert string to float
+                    cleaned_args[key] = float(value)
+                except ValueError:
+                    # If conversion fails, keep original value
+                    cleaned_args[key] = value
+            else:
+                cleaned_args[key] = value
+        
         optimizer = getattr(torch.optim, self.optimizer)(
-                parameters, **self.optimizer_args)
+                parameters, **cleaned_args)
         if hasattr(self.learning_rate, 'prepare'):
             self.learning_rate.prepare(optimizer)
         return optimizer

@@ -49,12 +49,12 @@ define:
             class: OptimizerScheduler
             optimizer: "SGD"
             optimizer_args:
-                lr: 0.005
+                lr: 0.0005
                 momentum: 0.9
                 weight_decay: 0.0001
             learning_rate:  
                 class: DecayLearningRate
-                lr: 0.005
+                lr: 0.0005
                 epochs: 50 # 1200
         epochs: 50 # 1200 学習エポック数
 

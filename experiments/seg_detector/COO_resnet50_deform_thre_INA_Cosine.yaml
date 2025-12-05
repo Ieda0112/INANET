@@ -1,9 +1,7 @@
-# このファイルはtotaltext_resnet50_deform_thre_INA.yamlを参考に作成しました。
-# COOデータセット用に修正しています。
+# CosineAnnealingLRを使用したバージョン
+# エポック数に依存しない学習率スケジュール
 import:
-    # - 'experiments/seg_detector/base_miniCOO.yaml'
     - 'experiments/seg_detector/base_halfCOO.yaml'
-    # - 'experiments/seg_detector/base_COO.yaml'
 package: []
 define:
   - name: 'Experiment'
@@ -43,19 +41,22 @@ define:
         model_saver: 
             class: ModelSaver
             dir_path: model
-            save_interval: 5000
+            save_interval: 3000
             signal_path: save
         scheduler: 
             class: OptimizerScheduler
-            optimizer: "AdamW"
+            optimizer: "SGD"
             optimizer_args:
                 lr: 0.0005
-                weight_decay: 0.01
+                momentum: 0.9
+                weight_decay: 0.0001
             learning_rate:  
-                class: DecayLearningRate
+                class: CosineAnnealingLR
                 lr: 0.0005
-                epochs: 30 # 1200
-        epochs: 30 # 1200 学習エポック数
+                T_max: 50          # エポック数と一致させる
+                eta_min: 0.00001   # 最小学習率
+                warmup_epochs: 2   # 最初の2エポックでウォームアップ
+        epochs: 50  # エポック数を変更しても学習率スケジュールは柔軟に対応
 
     validation:
         class: ValidationSettings
@@ -66,7 +67,7 @@ define:
                 batch_size: 1
                 num_workers: 0
         visualize: false
-        interval: 5000
+        interval: 4500
         exempt: 1
 
     evaluation:
@@ -80,11 +81,11 @@ define:
                 collect_fn:
                     class: ICDARCollectFN
         visualize: false
-        interval: 5000
+        interval: 4500
         exempt: 1
 
     logger:
         class: Logger
         verbose: true
         level: info
-        log_interval: 3000
+        log_interval: 1000

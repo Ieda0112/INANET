@@ -3,7 +3,7 @@
 Plot epoch-level avg_train_loss and avg_valid_loss from a training log.
 Saves <logname>_epoch_losses.png next to the log file.
 Usage:
-  python plot_loss.py path/to/training_YYYYMMDD_HHMMSS.log
+  python ieda_funcs/plot_loss.py path/to/training_YYYYMMDD_HHMMSS.log
 """
 import re
 import sys

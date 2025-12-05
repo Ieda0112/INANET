@@ -122,3 +122,77 @@ class BuitlinLearningRate(Configurable):
         # where each element is the corresponding learning rate for a
         # paramater group.
         return self.scheduler.get_lr()[0]
+
+
+class CosineAnnealingLR(Configurable):
+    """
+    Cosine Annealing学習率スケジューラ
+    エポック数に依存せず、滑らかに学習率を減衰させる
+    """
+    lr = State(default=0.001)
+    T_max = State(default=30)  # コサインサイクルの最大エポック数
+    eta_min = State(default=0)  # 最小学習率
+    warmup_epochs = State(default=0)  # ウォームアップエポック数
+
+    def __init__(self, cmd={}, **kwargs):
+        self.load_all(**kwargs)
+        self.lr = cmd.get('lr', None) or self.lr
+
+    def get_learning_rate(self, epoch, step=None):
+        # ウォームアップフェーズ
+        if epoch < self.warmup_epochs:
+            return self.lr * (epoch + 1) / (self.warmup_epochs + 1)
+        
+        # コサインアニーリング
+        epoch_adjusted = epoch - self.warmup_epochs
+        T_max_adjusted = self.T_max - self.warmup_epochs
+        
+        return self.eta_min + (self.lr - self.eta_min) * \
+               (1 + np.cos(np.pi * epoch_adjusted / T_max_adjusted)) / 2
+
+
+class ReduceLROnPlateauWrapper(Configurable):
+    """
+    ReduceLROnPlateau風のスケジューラ
+    valid lossの停滞を検知して学習率を下げる
+    """
+    lr = State(default=0.001)
+    factor = State(default=0.5)  # 学習率を下げる倍率
+    patience = State(default=3)  # 何エポック改善しなければ下げるか
+    min_lr = State(default=1e-6)  # 最小学習率
+    warmup_epochs = State(default=0)
+
+    def __init__(self, cmd={}, **kwargs):
+        self.load_all(**kwargs)
+        self.lr = cmd.get('lr', None) or self.lr
+        self.current_lr = self.lr
+        self.best_loss = float('inf')
+        self.counter = 0
+        self.loss_history = []
+
+    def get_learning_rate(self, epoch, step=None):
+        # ウォームアップフェーズ
+        if epoch < self.warmup_epochs:
+            return self.lr * (epoch + 1) / (self.warmup_epochs + 1)
+        
+        return self.current_lr
+    
+    def step(self, val_loss):
+        """
+        validation lossを受け取って学習率を調整する
+        trainerから呼び出す必要がある
+        """
+        self.loss_history.append(val_loss)
+        
+        if val_loss < self.best_loss:
+            self.best_loss = val_loss
+            self.counter = 0
+        else:
+            self.counter += 1
+            
+        if self.counter >= self.patience:
+            new_lr = max(self.current_lr * self.factor, self.min_lr)
+            if new_lr < self.current_lr:
+                print(f"Reducing learning rate: {self.current_lr:.6f} -> {new_lr:.6f}")
+                self.current_lr = new_lr
+                self.counter = 0

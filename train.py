@@ -19,9 +19,20 @@ from training.model_saver import ModelSaver
 from training.optimizer_scheduler import OptimizerScheduler
 from concern.config import Configurable, Config
 
+import random
+import numpy as np
 
+def set_seed(seed=42):
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
 
 def main():
+    # # main()関数の最初で呼び出す
+    # set_seed(42)
     parser = argparse.ArgumentParser(description='Text Recognition Training')
     parser.add_argument('exp', type=str)
     parser.add_argument('--name', type=str)
