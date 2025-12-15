@@ -58,6 +58,7 @@ dependencies:
       - fsspec==2025.3.0
       - gevent==24.2.1
       - gevent-websocket==0.10.1
+      - git-filter-repo==2.47.0
       - greenlet==3.1.1
       - hf-xet==1.1.10
       - huggingface-hub==0.35.3

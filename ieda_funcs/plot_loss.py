@@ -3,7 +3,9 @@
 Plot epoch-level avg_train_loss and avg_valid_loss from a training log.
 Saves <logname>_epoch_losses.png next to the log file.
 Usage:
-  python ieda_funcs/plot_loss.py path/to/training_YYYYMMDD_HHMMSS.log
+  python ieda_funcs/plot_loss.py outputs/processing_logs/training_YYYYMMDD_HHMMSS.log
+  python ieda_funcs/plot_loss.py outputs/processing_logs/training_YYYYMMDD_HHMMSS.log --series train
+  python ieda_funcs/plot_loss.py outputs/processing_logs/training_YYYYMMDD_HHMMSS.log --series valid
 """
 import re
 import sys
@@ -53,8 +55,8 @@ def main():
     if not epochs:
         print("No epochs parsed.")
         sys.exit(0)
-    min_ep = min(epochs)
-    max_ep = max(epochs)
+    min_ep = min(epochs)+1
+    max_ep = max(epochs)+1
 
     # build arrays aligned to epochs
     xs = epochs
@@ -71,12 +73,14 @@ def main():
         raise
 
     plt.figure(figsize=(10, 5))
+    # shift display by +1: epoch 0 data appears at x=1
+    xs_display = [e + 1 for e in xs]
     # choose which series to plot
     to_plot = args.series if 'args' in locals() else 'both'
     if to_plot in ('both', 'train'):
-        plt.plot(xs, train_vals, marker='o', linestyle='-', color='blue', label='avg_train_loss')
+        plt.plot(xs_display, train_vals, marker='o', linestyle='-', color='blue', label='avg_train_loss')
     if to_plot in ('both', 'valid'):
-        plt.plot(xs, valid_vals, marker='x', linestyle='-', color='orange', label='avg_valid_loss')
+        plt.plot(xs_display, valid_vals, marker='x', linestyle='-', color='orange', label='avg_valid_loss')
     plt.xlabel('epoch')
     plt.ylabel('loss')
     # If user requested only the train series, keep y-axis autoscaled.
@@ -89,8 +93,8 @@ def main():
         pass
     else:
         plt.ylim(bottom=0)
-    # plt.ylim(top=5.0)
-    # plt.ylim(bottom=4.5)
+    # plt.ylim(top=5.25)
+    # plt.ylim(bottom=4.65)
     # title: filename without .log
     title = p.name
     if title.endswith('.log'):
