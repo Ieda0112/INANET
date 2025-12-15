@@ -5,4 +5,5 @@ from decoders.dice_loss import DiceLoss
 from decoders.pss_loss import PSS_Loss
 from decoders.l1_loss import MaskL1Loss
 from decoders.balance_cross_entropy_loss import BalanceCrossEntropyLoss
+from decoders.focal_loss import FocalLoss, WeightedCrossEntropyLoss
 

@@ -274,3 +274,71 @@ class L1LeakyDiceLoss(nn.Module):
         metrics.update(**l1_metric, thresh_loss=thresh_loss)
         loss = main_loss + thresh_loss + l1_loss * self.l1_scale
         return loss, metrics
+
+
+class L1FocalLoss(nn.Module):
+    '''
+    Focal Loss on `binary`,
+    MaskL1Loss on `thresh`,
+    DiceLoss on `thresh_binary`.
+    Note: The meaning of inputs can be figured out in `SegDetectorLossBuilder`.
+    '''
+
+    def __init__(self, eps=1e-6, l1_scale=10, focal_scale=5, alpha=0.25, gamma=2.0):
+        super(L1FocalLoss, self).__init__()
+        from .dice_loss import DiceLoss
+        from .l1_loss import MaskL1Loss
+        from .focal_loss import FocalLoss
+        self.dice_loss = DiceLoss(eps=eps)
+        self.l1_loss = MaskL1Loss()
+        self.focal_loss = FocalLoss(alpha=alpha, gamma=gamma)
+
+        self.l1_scale = l1_scale
+        self.focal_scale = focal_scale
+
+    def forward(self, pred, batch):
+        focal_loss = self.focal_loss(pred['binary'], batch['gt'], batch['mask'])
+        metrics = dict(focal_loss=focal_loss)
+        if 'thresh' in pred:
+            l1_loss, l1_metric = self.l1_loss(pred['thresh'], batch['thresh_map'], batch['thresh_mask'])
+            dice_loss = self.dice_loss(pred['thresh_binary'], batch['gt'], batch['mask'])
+            metrics['thresh_loss'] = dice_loss
+            loss = dice_loss + self.l1_scale * l1_loss + focal_loss * self.focal_scale
+            metrics.update(**l1_metric)
+        else:
+            loss = focal_loss
+        return loss, metrics
+
+
+class L1WeightedCELoss(nn.Module):
+    '''
+    Weighted CrossEntropy Loss on `binary`,
+    MaskL1Loss on `thresh`,
+    DiceLoss on `thresh_binary`.
+    Note: The meaning of inputs can be figured out in `SegDetectorLossBuilder`.
+    '''
+
+    def __init__(self, eps=1e-6, l1_scale=10, wce_scale=5, pos_weight=None):
+        super(L1WeightedCELoss, self).__init__()
+        from .dice_loss import DiceLoss
+        from .l1_loss import MaskL1Loss
+        from .focal_loss import WeightedCrossEntropyLoss
+        self.dice_loss = DiceLoss(eps=eps)
+        self.l1_loss = MaskL1Loss()
+        self.wce_loss = WeightedCrossEntropyLoss(pos_weight=pos_weight)
+
+        self.l1_scale = l1_scale
+        self.wce_scale = wce_scale
+
+    def forward(self, pred, batch):
+        wce_loss = self.wce_loss(pred['binary'], batch['gt'], batch['mask'])
+        metrics = dict(wce_loss=wce_loss)
+        if 'thresh' in pred:
+            l1_loss, l1_metric = self.l1_loss(pred['thresh'], batch['thresh_map'], batch['thresh_mask'])
+            dice_loss = self.dice_loss(pred['thresh_binary'], batch['gt'], batch['mask'])
+            metrics['thresh_loss'] = dice_loss
+            loss = dice_loss + self.l1_scale * l1_loss + wce_loss * self.wce_scale
+            metrics.update(**l1_metric)
+        else:
+            loss = wce_loss
+        return loss, metrics

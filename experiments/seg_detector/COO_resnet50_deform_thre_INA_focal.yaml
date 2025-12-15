@@ -1,0 +1,97 @@
+# このファイルはtotaltext_resnet50_deform_thre_INA.yamlを参考に作成しました。
+# COOデータセット用に修正しています。
+import:
+    # - 'experiments/seg_detector/base_COO.yaml'
+    # - 'experiments/seg_detector/base_miniCOO.yaml'
+    - 'experiments/seg_detector/base_halfCOO.yaml'
+package: []
+define:
+  - name: 'Experiment'
+    class: Experiment
+    structure: 
+        class: Structure
+        builder: 
+            class: Builder
+            model: SegDetectorModel
+            model_args:
+                backbone: deformable_resnet50
+                decoder: SegDetector_Att_Next
+                decoder_args: 
+                    adaptive: True
+                    in_channels: [256, 512, 1024, 2048]
+                    k: 50
+                loss_class: L1FocalLoss
+                loss_args:
+                    eps: 1.0e-6
+                    l1_scale: 10
+                    focal_scale: 5
+                    alpha: 0.25
+                    gamma: 2.0
+        representer:
+            class: SegDetectorRepresenter
+            max_candidates: 1000
+        measurer:  
+            class: QuadMeasurer
+        visualizer:  
+            class: SegDetectorVisualizer
+    train: 
+        class: TrainSettings
+        data_loader: 
+            class: DataLoader
+            dataset: ^train_data
+            batch_size: 4
+            num_workers: 0
+        checkpoint: 
+            class: Checkpoint
+            start_epoch: 0
+            start_iter: 0
+            resume: null
+        model_saver: 
+            class: ModelSaver
+            dir_path: model
+            save_interval: 3000
+            signal_path: save
+        scheduler: 
+            class: OptimizerScheduler
+            optimizer: "SGD"
+            optimizer_args:
+                lr: 0.0005
+                momentum: 0.9
+                weight_decay: 0.0001
+            learning_rate:  
+                class: DecayLearningRate
+                lr: 0.0005
+                epochs: 50 # 1200
+        epochs: 50 # 1200 学習エポック数
+
+    validation:
+        class: ValidationSettings
+        data_loaders:
+            COO:
+                class: DataLoader
+                dataset: ^validate_data_trainlike
+                batch_size: 1
+                num_workers: 0
+        visualize: false
+        interval: 4500
+        exempt: 1
+
+    evaluation:
+        class: ValidationSettings
+        data_loaders:
+            COO: 
+                class: DataLoader
+                dataset: ^validate_data
+                batch_size: 1
+                num_workers: 0
+                collect_fn:
+                    class: ICDARCollectFN
+        visualize: false
+        interval: 4500
+        exempt: 1
+
+    logger:
+        class: Logger
+        verbose: true
+        level: info
+        log_interval: 1000
